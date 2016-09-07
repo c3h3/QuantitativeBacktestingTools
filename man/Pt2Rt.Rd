@@ -6,8 +6,13 @@
 \usage{
 Pt2Rt(Xt, XtColumnSeletor = Cl)
 }
+\arguments{
+\item{Xt}{a xts object}
+
+\item{XtColumnSeletor}{Xt's single column selector}
+}
 \description{
-Pt2Rt
+function which can help you transform your price xts to an accumulate return xts
 }
 \examples{
 Xt = getSymbols('2330.TW', auto.assign = F)

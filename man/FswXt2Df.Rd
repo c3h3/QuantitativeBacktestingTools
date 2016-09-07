@@ -6,8 +6,13 @@
 \usage{
 FswXt2Df(fswXt, filterDatetimes = NULL)
 }
+\arguments{
+\item{fswXt}{a forward sampling xts}
+
+\item{filterDatetimes}{filtered fswXt by datetimes}
+}
 \description{
-FswXt2Df
+a function which can help you transform your forward sampling xts to data.frame
 }
 \examples{
 Xt = getSymbols('2330.TW', auto.assign = F)

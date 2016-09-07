@@ -6,8 +6,13 @@
 \usage{
 ForwardSlidingWindow(accRt, win_size)
 }
+\arguments{
+\item{accRt}{an accumulate return xts object}
+
+\item{win_size}{the size of forward sampling slide window}
+}
 \description{
-ForwardSlidingWindow
+a funtion which an help you do forward sampling easier
 }
 \examples{
 Xt = getSymbols('2330.TW', auto.assign = F)
