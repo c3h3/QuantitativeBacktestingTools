@@ -4,12 +4,14 @@
 \alias{FswXt2Df}
 \title{FswXt2Df}
 \usage{
-FswXt2Df(fswXt, filterDatetimes = NULL)
+FswXt2Df(fswXt, filterDatetimes = NULL, longFormat = F)
 }
 \arguments{
 \item{fswXt}{a forward sampling xts}
 
 \item{filterDatetimes}{filtered fswXt by datetimes}
+
+\item{longFormat}{logical variable which defined your output format is long format or wide format}
 }
 \description{
 a function which can help you transform your forward sampling xts to data.frame

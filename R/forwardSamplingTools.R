@@ -54,11 +54,12 @@ ForwardSlidingWindow <- function(accRt, win_size) {
 #'
 #' @param fswXt a forward sampling xts
 #' @param filterDatetimes filtered fswXt by datetimes
+#' @param longFormat logical variable which defined your output format is long format or wide format
 #' @examples
 #' Xt = getSymbols('2330.TW', auto.assign = F)
 #' Xt %>% Pt2Rt %>% ForwardSlidingWindow(20) %>% FswXt2Df(index(Xt)[c(1,3,5,7,9)]) %>% head
 #' @export
-FswXt2Df = function(fswXt, filterDatetimes=NULL){
+FswXt2Df = function(fswXt, filterDatetimes=NULL, longFormat=F){
   if (is.null(filterDatetimes)){
     filteredXt = fswXt
   }else{
@@ -66,6 +67,11 @@ FswXt2Df = function(fswXt, filterDatetimes=NULL){
   }
   retDf = data.frame(datetime=index(filteredXt),filteredXt)
   rownames(retDf) <- NULL
+
+  if (longFormat){
+    retDf %<>% gather(key = "t",value = "Rt",-datetime) %>% arrange(datetime)
+    retDf$t %<>% sub("t","",.) %>% as.numeric()
+  }
 
   return(retDf)
 }
