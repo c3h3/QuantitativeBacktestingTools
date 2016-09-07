@@ -77,3 +77,91 @@ FswXt2Df = function(fswXt, filterDatetimes=NULL, longFormat=F){
 
   return(retDf)
 }
+
+
+####################################################
+# simulateStopLimitPrices
+####################################################
+
+#' simulateStopLimitPrices
+#'
+#' a function which can help you transform your forward sampling xts to data.frame
+#'
+#' @param longFswXtDf a forward sampling xts with long format
+#' @param limitRatio limit return ratio
+#' @param stopRatio stop return ratio
+#' @param NonHitIdxValue when the price not hit stop or limit, assign this value
+#' @examples
+#' Xt = getSymbols('2330.TW', auto.assign = F)
+#' Xt %>% Pt2Rt %>% ForwardSlidingWindow(20) %>% FswXt2Df(index(Xt)[c(1,3,5,7,9)],longFormat=T) %>% simulateStopLimitPrices(0.06,0.06) %>% head
+#' @export
+simulateStopLimitPrices <- function(longFswXtDf, limitRatio, stopRatio, NonHitIdxValue = 1e6) {
+  hitLimitDf =
+    long_gcfswXtDf %>%
+    filter(Rt >= (1+limitRatio)) %>%
+    group_by(datetime) %>%
+    summarise(hitLimitIdx = min(t)) %>%
+    inner_join(long_gcfswXtDf,by=c("hitLimitIdx"="t","datetime"="datetime")) %>%
+    mutate(hitLimitPrice=Rt) %>% select(-Rt)
+
+  hitStopDf =
+    long_gcfswXtDf %>%
+    filter(Rt <= (1-stopRatio)) %>%
+    group_by(datetime) %>%
+    summarise(hitStopIdx = min(t)) %>%
+    inner_join(long_gcfswXtDf,by=c("hitStopIdx"="t","datetime"="datetime")) %>%
+    mutate(hitStopPrice=Rt) %>% select(-Rt)
+
+
+  hitStopLimitDf =
+    dplyr::full_join(hitLimitDf,hitStopDf,by="datetime") %>%
+    mutate(hitLimitIdx = ifelse(is.na(hitLimitIdx),NonHitIdxValue,hitLimitIdx),
+           hitStopIdx = ifelse(is.na(hitStopIdx),NonHitIdxValue,hitStopIdx)) %>%
+    mutate(hitType = sign(hitStopIdx - hitLimitIdx),
+           hitIdx = pmin(hitStopIdx,hitLimitIdx),
+           hitPrice = 0) %>%
+    mutate(hitPrice = ifelse(hitType == -1, hitStopPrice, hitPrice)) %>%
+    mutate(hitPrice = ifelse(hitType == 1, hitLimitPrice, hitPrice)) %>%
+    select(datetime,hitType,hitIdx,hitPrice)
+
+  return(hitStopLimitDf)
+}
+
+####################################################
+# doSeriesOfSimulateStopLimitPrices
+####################################################
+
+#' doSeriesOfSimulateStopLimitPrices
+#'
+#' a function which can help you transform your forward sampling xts to data.frame
+#'
+#' @param longFswXtDf a forward sampling xts with long format
+#' @param limitRatioSeq series of limit return ratio
+#' @param stopRatioSeq series of stop return ratio
+#' @param NonHitIdxValue when the price not hit stop or limit, assign this value
+#' @examples
+#' Xt = getSymbols('2330.TW', auto.assign = F)
+#' Xt %>% Pt2Rt %>% ForwardSlidingWindow(20) %>% FswXt2Df(index(Xt)[c(1,3,5,7,9)],longFormat=T) %>% simulateStopLimitPrices(0.06,0.06) %>% head
+#' @export
+doSeriesOfSimulateStopLimitPrices = function(longFswXtDf,
+                                             limitRatioSeq = seq(0.01,0.1,0.01),
+                                             stopRatioSeq=seq(0.01,0.1,0.01),
+                                             NonHitIdxValue = 1e6){
+  expsArgs = expand.grid(limitRatio = limitRatioSeq,
+                         stopRatio = stopRatioSeq)
+
+  expsArgs %<>% split(seq(nrow(expsArgs)))
+
+  expsResults= lapply(expsArgs, function(args){
+    args = as.list(args)
+    args$longFswXtDf = long_gcfswXtDf
+    retDf = do.call(simulateStopLimitPrices, args)
+    retDf$limitRatio = args$limitRatio
+    retDf$stopRatio = args$stopRatio
+    return(retDf)
+  })
+
+  expsResultsDf = do.call(rbind,expsResults)
+  return(expsResultsDf)
+}
+
