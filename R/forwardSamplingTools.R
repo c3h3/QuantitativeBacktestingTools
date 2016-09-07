@@ -68,6 +68,8 @@ FswXt2Df = function(fswXt, filterDatetimes=NULL, longFormat=F){
   retDf = data.frame(datetime=index(filteredXt),filteredXt)
   rownames(retDf) <- NULL
 
+  retDf %<>% na.omit
+
   if (longFormat){
     retDf %<>% gather(key = "t",value = "Rt",-datetime) %>% arrange(datetime)
     retDf$t %<>% sub("t","",.) %>% as.numeric()
